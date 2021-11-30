@@ -69,7 +69,7 @@ class SimpleRouter(SimpleRouterBase):
             self.processArp(self, restOfPacket, etherHeader, iface)
         elif etherHeader.type == 0x0800:
             self.processIp(self, restOfPacket, iface)
-        else
+        else:
             # ignore packets that neither ARP nor IP
             pass
 
