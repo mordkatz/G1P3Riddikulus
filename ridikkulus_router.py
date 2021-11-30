@@ -91,7 +91,20 @@ class SimpleRouter(SimpleRouterBase):
           that corresponds to this IP.  If no IP found, then request is not for you and should be ignored.
         - if it is response, then you should decode and call self.arpCache.handleIncomingArpReply()
         '''
-        pass
+        pkt = headers.ArpHeader(arpPacket)
+        if pkt.Opcode == 1:
+            # Then it is a request
+            destIP = pkt.tip
+            requestIP = self.findIfaceByIp(destIP)
+            if requestIP is not None:
+                pkt.tha = requestIP.mac
+                pkt.Opcode = 2
+                offset = pkt.decode(arpPacket)
+                new_packet = pkt.encode() + arpPacket[offset:]
+        elif pkt.Opcode == 2:
+            self.arpCache.handleIncomingArpReply(pkt)
+        else:
+            pass
 
     def processIp(self, ipPacket, iface):
         '''
