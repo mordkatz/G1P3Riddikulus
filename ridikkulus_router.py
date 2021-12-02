@@ -26,6 +26,14 @@ from router_base.utils import checksum, print_hdrs
 
 import sys
 
+DEBUG = True
+
+
+def logVerboseMessage(s):
+    if DEBUG:
+        print(s)
+
+
 class SimpleRouter(SimpleRouterBase):
 
     #
@@ -91,20 +99,29 @@ class SimpleRouter(SimpleRouterBase):
           that corresponds to this IP.  If no IP found, then request is not for you and should be ignored.
         - if it is response, then you should decode and call self.arpCache.handleIncomingArpReply()
         '''
+
+        logVerboseMessage("Checkpoint 1: processArp function")
         pkt = headers.ArpHeader(arpPacket)
         if pkt.Opcode == 1:
+            logVerboseMessage("Checkpoint 2: processArp function")
             # Then it is a request
             destIP = pkt.tip
             requestIP = self.findIfaceByIp(destIP)
             if requestIP is not None:
+                logVerboseMessage("Checkpoint 3: processArp function")
                 pkt.tha = requestIP.mac
                 pkt.Opcode = 2
                 offset = pkt.decode(arpPacket)
+                logVerboseMessage("Checkpoint 4: processArp function")
                 new_packet = pkt.encode() + arpPacket[offset:]
         elif pkt.Opcode == 2:
+            logVerboseMessage("Checkpoint 5: processArp function")
             self.arpCache.handleIncomingArpReply(pkt)
         else:
+            logVerboseMessage("Checkpoint 6: processArp function")
             pass
+
+        logVerboseMessage("Checkpoint 7: processArp function")
 
     def processIp(self, ipPacket, iface):
         '''
@@ -122,7 +139,6 @@ class SimpleRouter(SimpleRouterBase):
         - If it is for the router, then call self.processIpToSelf
         '''
         pass
-
 
     def processIpToSelf(self, ipPacket, origIpHeader, iface):
         '''
@@ -215,6 +231,7 @@ class SimpleRouter(SimpleRouterBase):
 
     def __init__(self):
         super().__init__(RoutingTable(), ArpCache(self))
+
 
 if __name__ == '__main__':
     rtr = SimpleRouter()
