@@ -117,9 +117,17 @@ class SimpleRouter(SimpleRouterBase):
                 logVerboseMessage("Checkpoint 3: processArp function")
                 #pkt.tha is the target mac address /target hardware address
                 pkt.op = 2
-                offset = pkt.decode(arpPacket)
+                pkt.tha = pkt.sha
+                pkt.sha = requestIP.mac
+                pkt.tip = pkt.sip
+                pkt.sip = requestIP.ip
                 logVerboseMessage("Checkpoint 4: processArp function")
-                new_packet = pkt.encode() + arpPacket[offset:]
+                new_packet = pkt.encode()
+                #returnIFace = Interface("sw0-eth1", (pkt.sip, pkt.sha))
+                logVerboseMessage("Checkpoint 4.1: packet info" + str(new_packet))
+                logVerboseMessage("Checkpoint 4.2: iface info" + str(requestIP))
+                print(requestIP)
+                self.sendPacket(new_packet, requestIP)
         elif pkt.op == 2:
             logVerboseMessage("Checkpoint 5: processArp function")
             self.arpCache.handleIncomingArpReply(pkt)
