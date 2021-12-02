@@ -16,7 +16,6 @@ import Ice
 import os
 import logging
 import sys
-
 from .interface import Interface
 from .ip_address import IpAddress
 

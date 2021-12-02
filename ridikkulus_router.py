@@ -74,7 +74,6 @@ class SimpleRouter(SimpleRouterBase):
         # Study fields available in each header in router_base/headers.py.
         # All fields there follow the correspodning specifications, so you may
         # need to check those, if any question
-
         if etherHeader.type == 0x0806:
             self.processArp(restOfPacket, etherHeader, iface)
         elif etherHeader.type == 0x0800:
@@ -107,18 +106,24 @@ class SimpleRouter(SimpleRouterBase):
             # Then it is a request
             #pkt.tip is the target ip address
             destIP = pkt.tip
-            requestIP = self.findIfaceByIp(destIP)
-            if requestIP is not None:
+            #requestIP = self.findIfaceByIp(destIP)
+            if iface.ip == pkt.tip:
                 #pkt.tha is the target mac address /target hardware address
                 pkt.op = 2
                 pkt.tha = pkt.sha
-                pkt.sha = requestIP.mac
+                pkt.sha = iface.mac
                 pkt.tip = pkt.sip
-                pkt.sip = requestIP.ip
-                new_packet = pkt.encode()
+                pkt.sip = iface.ip
+                # dhost (6 bytes): destination ethernet address
+                # shost (6 bytes): source ethernet address
+                # type  (2 bytes): packet type ID
+                newEtherHeader = headers.EtherHeader(dhost = pkt.tha, shost = iface.mac, type = 0x0806)
+                new_packet = newEtherHeader.encode() + pkt.encode()
                 #returnIFace = Interface("sw0-eth1", (pkt.sip, pkt.sha))
-                print(requestIP)
-                self.sendPacket(new_packet, requestIP)
+                print("arp was hit")
+                print(iface)
+                self.sendPacket(new_packet, iface.name)
+                print("send was hit")
         elif pkt.op == 2:
             self.arpCache.handleIncomingArpReply(pkt)
         else:
