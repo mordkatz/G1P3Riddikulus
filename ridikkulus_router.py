@@ -19,6 +19,7 @@ from ridikkulus_routing_table import RoutingTable
 from ridikkulus_arp_cache import ArpCache
 
 from router_base.headers import *
+from router_base import headers
 from router_base.mac_address import MacAddress
 from router_base.ip_address import IpAddress
 from router_base.interface import Interface
@@ -75,7 +76,7 @@ class SimpleRouter(SimpleRouterBase):
         # need to check those, if any question
 
         if etherHeader.type == 0x0806:
-            self.processArp(self, restOfPacket, etherHeader, iface)
+            self.processArp(restOfPacket, etherHeader, iface)
         elif etherHeader.type == 0x0800:
             self.processIp(self, restOfPacket, iface)
         else:
