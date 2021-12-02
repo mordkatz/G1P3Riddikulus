@@ -7,3 +7,4 @@ router
 .vagrant
 __pycache__
 *.pyc
+.idea
