@@ -17,8 +17,6 @@ import os
 import logging
 import sys
 
-import pox
-
 from .interface import Interface
 from .ip_address import IpAddress
 
@@ -33,7 +31,7 @@ class SimpleRouterBase:
         self.ifNameToIpMap = {}
 
     def sendPacket(self, packet, outIface):
-        pox.begin_sendPacket(packet, outIface)
+        self.pox.begin_sendPacket(packet, outIface)
 
     #
     # Load routing table information from \p rtConfig file
