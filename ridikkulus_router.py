@@ -78,7 +78,7 @@ class SimpleRouter(SimpleRouterBase):
         if etherHeader.type == 0x0806:
             self.processArp(restOfPacket, etherHeader, iface)
         elif etherHeader.type == 0x0800:
-            self.processIp(restOfPacket, iface)
+            self.processIp(self, restOfPacket, iface)
         else:
             # ignore packets that neither ARP nor IP
             pass
@@ -102,21 +102,31 @@ class SimpleRouter(SimpleRouterBase):
         - if it is response, then you should decode and call self.arpCache.handleIncomingArpReply()
         """
 
+        logVerboseMessage("Checkpoint 1: processArp function")
         pkt = headers.ArpHeader(arpPacket)
-        if pkt.Opcode == 1:
+        logVerboseMessage("Checkpoint 1.1: processArp function, pkt information: ")
+        logVerboseMessage(str(pkt))
+        logVerboseMessage("/n pkt.op" + str(pkt.op))
+        if pkt.op == 1:
+            logVerboseMessage("Checkpoint 2: processArp function")
             # Then it is a request
             destIP = pkt.tip
             requestIP = self.findIfaceByIp(destIP)
             if requestIP is not None:
+                logVerboseMessage("Checkpoint 3: processArp function")
                 pkt.tha = requestIP.mac
-                pkt.Opcode = 2
+                pkt.op = 2
                 offset = pkt.decode(arpPacket)
+                logVerboseMessage("Checkpoint 4: processArp function")
                 new_packet = pkt.encode() + arpPacket[offset:]
-        elif pkt.Opcode == 2:
+        elif pkt.op == 2:
+            logVerboseMessage("Checkpoint 5: processArp function")
             self.arpCache.handleIncomingArpReply(pkt)
         else:
+            logVerboseMessage("Checkpoint 6: processArp function")
             pass
 
+        logVerboseMessage("Checkpoint 7: processArp function")
 
     def processIp(self, ipPacket, iface):
         """
