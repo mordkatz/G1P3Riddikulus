@@ -108,13 +108,14 @@ class SimpleRouter(SimpleRouterBase):
         logVerboseMessage(str(pkt))
         logVerboseMessage("/n pkt.op" + str(pkt.op))
         if pkt.op == 1:
-            logVerboseMessage("Checkpoint 2: processArp function")
             # Then it is a request
+            logVerboseMessage("Checkpoint 2: processArp function")
+            #pkt.tip is the target ip address
             destIP = pkt.tip
             requestIP = self.findIfaceByIp(destIP)
             if requestIP is not None:
                 logVerboseMessage("Checkpoint 3: processArp function")
-                pkt.tha = requestIP.mac
+                #pkt.tha is the target mac address /target hardware address
                 pkt.op = 2
                 offset = pkt.decode(arpPacket)
                 logVerboseMessage("Checkpoint 4: processArp function")
