@@ -16,10 +16,14 @@ import Ice
 import os
 import logging
 import sys
+
+import pox
+
 from .interface import Interface
 from .ip_address import IpAddress
 
 log = logging.getLogger("riddikulus.simple_router_base")
+
 
 class SimpleRouterBase:
     def __init__(self, routingTable, arpCache):
@@ -29,7 +33,7 @@ class SimpleRouterBase:
         self.ifNameToIpMap = {}
 
     def sendPacket(self, packet, outIface):
-        self.pox.begin_sendPacket(packet, outIface)
+        pox.begin_sendPacket(packet, outIface)
 
     #
     # Load routing table information from \p rtConfig file
@@ -45,13 +49,16 @@ class SimpleRouterBase:
             for cnt, line in enumerate(f):
                 items = line.split()
                 if len(items) != 2:
-                    raise RuntimeError("Error on line %d: expected two values (iface, ip) separated by space, got [%s]" % (cnt, line))
+                    raise RuntimeError(
+                        "Error on line %d: expected two values (iface, ip) separated by space, got [%s]" % (
+                        cnt, line))
                 iface, ip = items
 
                 try:
                     self.ifNameToIpMap[iface] = IpAddress(ip)
                 except:
-                    raise RuntimeError("Invalid IP address `%s` for interface `%s`" % (ipStr, iface));
+                    raise RuntimeError(
+                        "Invalid IP address `%s` for interface `%s`" % (ipStr, iface));
 
     #
     # Get routing table
@@ -64,16 +71,16 @@ class SimpleRouterBase:
     #
     def getArp(self):
         return self.arpCache
-    
+
     #
     # Print router interfaces
     #
     def printIfaces(self, file):
         if len(self.ifaces) == 0:
-            file.write( " Interface list empty \n")
+            file.write(" Interface list empty \n")
 
         for iface in self.ifaces:
-                file.write("%s\n" % iface)
+            file.write("%s\n" % iface)
 
     #
     # Reset ARP cache and interface list (e.g., when mininet restarted)
@@ -88,9 +95,11 @@ class SimpleRouterBase:
             try:
                 ip = self.ifNameToIpMap[iface.name]
             except KeyError:
-                print("IP_CONFIG missing information about interface `%s`. Skipping it" % iface.name, file=sys.stderr)
+                print(
+                    "IP_CONFIG missing information about interface `%s`. Skipping it" % iface.name,
+                    file=sys.stderr)
                 continue
-            
+
             self.ifaces.append(Interface(iface.name, iface.mac, ip))
 
         self.printIfaces(file=sys.stderr)

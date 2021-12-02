@@ -29,15 +29,17 @@ if not slice_dir:
 Ice.loadSlice("", ["-I%s" % slice_dir, "%s/pox.ice" % os.path.dirname(os.path.realpath(__file__))])
 import pox
 
+
 class PacketHandler(pox.PacketHandler):
     def __init__(self, router):
         self.router = router
 
     def handlePacket(self, packet, inIface, current):
-      self.router.handlePacket(packet, inIface)
+        self.router.handlePacket(packet, inIface)
 
     def resetRouter(self, ports, current):
-      self.router.reset(ports)
+        self.router.reset(ports)
+
 
 class Tester(pox.Tester):
     def __init__(self, router):
@@ -49,55 +51,59 @@ class Tester(pox.Tester):
     def getRoutingTable(self, current):
         return str(self.router.getRoutingTable())
 
+
 class PoxConnectorApp(Ice.Application):
-  def __init__(self, simpleRouter):
-    super().__init__()
-    self.router = simpleRouter
-  
-  def run(self, argv):
-    rtFile = self.communicator().getProperties().getPropertyWithDefault("RoutingTable", "RTABLE")
-    self.router.getRoutingTable().load(rtFile)
+    def __init__(self, simpleRouter):
+        super().__init__()
+        self.router = simpleRouter
 
-    self.router.pox = pox.PacketInjectorPrx.checkedCast(self.communicator().propertyToProxy("SimpleRouter.Proxy").ice_twoway())
-    if not self.router.pox:
-      log.error("ERROR: Cannot connect to POX controller or invalid configuration of the controller")
-      return -1
+    def run(self, argv):
+        rtFile = self.communicator().getProperties().getPropertyWithDefault("RoutingTable",
+                                                                            "RTABLE")
+        self.router.getRoutingTable().load(rtFile)
 
-    ifFile = self.communicator().getProperties().getPropertyWithDefault("Ifconfig", "IP_CONFIG")
-    self.router.loadIfconfig(ifFile)
+        self.router.pox = pox.PacketInjectorPrx.checkedCast(
+            self.communicator().propertyToProxy("SimpleRouter.Proxy").ice_twoway())
+        if not self.router.pox:
+            log.error(
+                "ERROR: Cannot connect to POX controller or invalid configuration of the controller")
+            return -1
 
-    adapter = self.communicator().createObjectAdapter("")
-    ident = Ice.Identity()
-    ident.name = Ice.generateUUID()
-    ident.category = ""
+        ifFile = self.communicator().getProperties().getPropertyWithDefault("Ifconfig", "IP_CONFIG")
+        self.router.loadIfconfig(ifFile)
 
-    adapter.add(PacketHandler(self.router), ident)
-    adapter.activate()
-    self.router.pox.ice_getConnection().setAdapter(adapter)
-    self.router.pox.addPacketHandler(ident)
+        adapter = self.communicator().createObjectAdapter("")
+        ident = Ice.Identity()
+        ident.name = Ice.generateUUID()
+        ident.category = ""
 
-    ifaces = self.router.pox.getIfaces()
-    self.router.reset(ifaces)
+        adapter.add(PacketHandler(self.router), ident)
+        adapter.activate()
+        self.router.pox.ice_getConnection().setAdapter(adapter)
+        self.router.pox.addPacketHandler(ident)
 
-    def poxPinger(self):
-        while not self.shouldStop:
-            time.sleep(1)
-            try:
-                self.router.pox.ice_ping()
-            except:
-                print("Connection to POX service broken, exiting...", file=sys.stderr)
-                self.communicator().shutdown()
-    
-    self.shouldStop = False
-    checkThread = threading.Thread(target=poxPinger, args=(self,))
-    checkThread.start()
+        ifaces = self.router.pox.getIfaces()
+        self.router.reset(ifaces)
 
-    testAdapter = self.communicator().createObjectAdapterWithEndpoints("Tester", "tcp -p 65500")
-    testAdapter.add(Tester(self.router), self.communicator().stringToIdentity("Tester"))
-    testAdapter.activate()
+        def poxPinger(self):
+            while not self.shouldStop:
+                time.sleep(1)
+                try:
+                    self.router.pox.ice_ping()
+                except:
+                    print("Connection to POX service broken, exiting...", file=sys.stderr)
+                    self.communicator().shutdown()
 
-    self.communicator().waitForShutdown()
-    self.shouldStop = True
-    self.router.arpCache.stop()
-    checkThread.join()
-    return 0
+        self.shouldStop = False
+        checkThread = threading.Thread(target=poxPinger, args=(self,))
+        checkThread.start()
+
+        testAdapter = self.communicator().createObjectAdapterWithEndpoints("Tester", "tcp -p 65500")
+        testAdapter.add(Tester(self.router), self.communicator().stringToIdentity("Tester"))
+        testAdapter.activate()
+
+        self.communicator().waitForShutdown()
+        self.shouldStop = True
+        self.router.arpCache.stop()
+        checkThread.join()
+        return 0
