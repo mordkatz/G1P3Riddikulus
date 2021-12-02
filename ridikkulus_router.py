@@ -52,18 +52,19 @@ class SimpleRouter(SimpleRouterBase):
             print("Received packet, but interface is unknown, ignoring", file=sys.stderr)
             return
 
-        # all incoming packets are guaranteed to be Ethernet, so unconditionally process them as Ethernet
+        # all incoming packets are guaranteed to be Ethernet, so unconditionally process them as
+        # Ethernet
         self.processEther(origPacket, iface)
 
     def processEther(self, etherPacket, iface):
-        '''
+        """
         SUGGESTED IMPLEMENTATION LOGIC
         You are free to implement this method and relevant calling methods in other methods
         or ignore it and implement in a completely different way
 
         \p etherPacket packet buffer that starts with the Ethernet header
         \p iface instance of Interface class (it has .name, .mac, and .ip members)
-        '''
+        """
 
         etherHeader = EtherHeader()
         offset = etherHeader.decode(etherPacket)
@@ -82,7 +83,7 @@ class SimpleRouter(SimpleRouterBase):
             pass
 
     def processArp(self, arpPacket, origEtherHeader, iface):
-        '''
+        """
         SUGGESTED IMPLEMENTATION LOGIC
         You are free to implement this method and relevant calling methods in other methods
         or ignore it and implement in a completely different way
@@ -98,7 +99,7 @@ class SimpleRouter(SimpleRouterBase):
           address from the ARP request and call   self.findIfaceByIp() method to find a local interface
           that corresponds to this IP.  If no IP found, then request is not for you and should be ignored.
         - if it is response, then you should decode and call self.arpCache.handleIncomingArpReply()
-        '''
+        """
 
         logVerboseMessage("Checkpoint 1: processArp function")
         pkt = headers.ArpHeader(arpPacket)
@@ -124,7 +125,7 @@ class SimpleRouter(SimpleRouterBase):
         logVerboseMessage("Checkpoint 7: processArp function")
 
     def processIp(self, ipPacket, iface):
-        '''
+        """
         SUGGESTED IMPLEMENTATION LOGIC
         You are free to implement this method and relevant calling methods in other methods
         or ignore it and implement in a completely different way
@@ -137,11 +138,11 @@ class SimpleRouter(SimpleRouterBase):
           has and all of such packets should be treated equally).  You can use self.findIfaceByIp() method.
           If no interface found, then this packet is for someone else and you should call self.processIpToForward()
         - If it is for the router, then call self.processIpToSelf
-        '''
+        """
         pass
 
     def processIpToSelf(self, ipPacket, origIpHeader, iface):
-        '''
+        """
         SUGGESTED IMPLEMENTATION LOGIC
         You are free to implement this method and relevant calling methods in other methods
         or ignore it and implement in a completely different way
@@ -151,11 +152,11 @@ class SimpleRouter(SimpleRouterBase):
         In our project, one can either send ICMP packets (ping) to the router or it will be
         a UDP packet to a random port when traceroute is used.  Therefore, you need to decode
         ipPacket and determine which is which, ignoring any other types of packets (e.g., TCP).
-        '''
+        """
         pass
 
     def processIcmp(self, icmpPacket, origIpHeader, iface):
-        '''
+        """
         SUGGESTED IMPLEMENTATION LOGIC
         You are free to implement this method and relevant calling methods in other methods
         or ignore it and implement in a completely different way
@@ -163,11 +164,11 @@ class SimpleRouter(SimpleRouterBase):
         \p iface instance of Interface class (it has .name, .mac, and .ip members)
 
         Decode ICMP packet and process ICMP pings (=send reply). All other incoming ICMP packets can be ignored.
-        '''
+        """
         pass
 
     def processUdp(self, udpPacket, origIpHeader, iface):
-        '''
+        """
         SUGGESTED IMPLEMENTATION LOGIC
         You are free to implement this method and relevant calling methods in other methods
         or ignore it and implement in a completely different way
@@ -175,11 +176,11 @@ class SimpleRouter(SimpleRouterBase):
         \p iface instance of Interface class (it has .name, .mac, and .ip members)
 
         You don't actually decode udpPacket, but rather just implement ICMP destination port unreachable response.
-        '''
+        """
         pass
 
     def processIpToForward(self, ipPacket, origIpHeader, iface):
-        '''
+        """
         SUGGESTED IMPLEMENTATION LOGIC
         You are free to implement this method and relevant calling methods in other methods
         or ignore it and implement in a completely different way
@@ -214,7 +215,7 @@ class SimpleRouter(SimpleRouterBase):
           entry.gw address instead of origIpHeader.dst for ARP cache lookup.  IP header's destination IP
           stays original, .gw only used to lookup MAC address of the gateway!
 
-        '''
+        """
         pass
 
     #
