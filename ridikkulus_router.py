@@ -143,16 +143,15 @@ class SimpleRouter(SimpleRouterBase):
 
         # Check for ipHeader checksum being correct
         checksumPkt = headers.IpHeader(ipPacket[:20])
-        #checksumPkt.sum = 5
+        checksumPkt.sum = 0
 
         if utils.checksum(checksumPkt.encode()) != pkt.sum or len(ipPacket) < 21:
-            """print("Checksum does not match. utils.checksum: {}, pkt.sum: {}".format(
+            print("Checksum does not match. utils.checksum: {}, pkt.sum: {}".format(
                 utils.checksum(checksumPkt.encode()), pkt.sum))
 
             #self.sendPacket(buf, iface.name)
             return
         else:
-            pass
             # print("Checksum values match!")
             if iface.ip == pkt.dst:
                 logVerboseMessage("IP Packet Destination IP matches this Router")
