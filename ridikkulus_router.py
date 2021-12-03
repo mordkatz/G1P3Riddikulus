@@ -185,8 +185,8 @@ class SimpleRouter(SimpleRouterBase):
         # UDP packet and if it is 2 than it is a ICMP packet
 
         #because I am not sure I just want to try proccessing ICMP packets
-        icmpPacket = headers.IcmpHeader(origIpHeader[14 + 20:])
-        self.processIcmp(icmpPacket, origIpHeader, iface)
+        #icmpPacket = headers.IcmpHeader(origIpHeader[14 + 20:])
+        #self.processIcmp(icmpPacket, origIpHeader, iface)
         '''
         I cant use the code below because origIpHeader includes the ethernet header and
         it is incoded I could decode it and then 
@@ -203,6 +203,7 @@ class SimpleRouter(SimpleRouterBase):
         else:
             return
         '''
+        pass
 
     def processIcmp(self, icmpPacket, origIpHeader, iface):
         """
