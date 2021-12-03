@@ -148,6 +148,9 @@ class SimpleRouter(SimpleRouterBase):
         if utils.checksum(checksumPkt.encode()) != pkt.sum or len(ipPacket) < 21:
             # print("Checksum does not match. utils.checksum: {}, pkt.sum: {}".format(
             #      utils.checksum(checksumPkt.encode()), pkt.sum))
+            pkt = None
+            checksumPkt = None
+            ipPacket = None
             pass
         else:
             pass
