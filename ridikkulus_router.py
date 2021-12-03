@@ -148,19 +148,20 @@ class SimpleRouter(SimpleRouterBase):
         if utils.checksum(checksumPkt.encode()) != pkt.sum or len(ipPacket) < 21:
             """print("Checksum does not match. utils.checksum: {}, pkt.sum: {}".format(
                 utils.checksum(checksumPkt.encode()), pkt.sum))
-            '''rpkt = pkt
-            rpkt.src = pkt.dst
-            rpkt.dst = pkt.src
-            newEtherHeader = headers.EtherHeader(dhost=etherHead.shost, shost=iface.mac, type=0x0800)
-            buf = newEtherHeader.encode() + rpkt.encode()
-            self.sendPacket(buf, iface.name) '''
+
+            #self.sendPacket(buf, iface.name)
             return
         else:
             pass
             # print("Checksum values match!")
             if iface.ip == pkt.dst:
                 logVerboseMessage("IP Packet Destination IP matches this Router")
-                self.processIpToSelf(ipPacket, pkt, iface)
+                rpkt = pkt
+                rpkt.src = pkt.dst
+                rpkt.dst = pkt.src
+                newEtherHeader = headers.EtherHeader(dhost=etherHead.shost, shost=iface.mac, type=0x0800)
+                buf = newEtherHeader.encode() + rpkt.encode()
+                self.processIpToSelf(pkt, buf, iface)
             else:
                 logVerboseMessage("IP Packet Destination IP DOES NOT match router, forwarding..")
                 self.processIpToForward(ipPacket, pkt, iface)
@@ -180,7 +181,28 @@ class SimpleRouter(SimpleRouterBase):
         a UDP packet to a random port when traceroute is used.  Therefore, you need to decode
         ipPacket and determine which is which, ignoring any other types of packets (e.g., TCP).
         """
-        pass
+        # I am not actually sure what origIpHeader is supposed to equal I am just assuming if it is 1 then it is a
+        # UDP packet and if it is 2 than it is a ICMP packet
+
+        #because I am not sure I just want to try proccessing ICMP packets
+        icmpPacket = headers.IcmpHeader(origIpHeader[14 + 20:])
+        self.processIcmp(icmpPacket, origIpHeader, iface)
+        '''
+        I cant use the code below because origIpHeader includes the ethernet header and
+        it is incoded I could decode it and then 
+        if origIpHeader.p == 1:
+            # I have to get the udp packet this should be everything but the originalIpHeader
+            # I don't understand why udpPacketHeader is not in headers.py nor in the instructions
+            #udpPacket = headers.
+            #slef.processUdp(udpPacket, origIpHeader, iface
+            pass
+        elif origIpHeader.p == 2:
+            #I have to get the ICMP packet this should be everything but the originalIpHeader
+            icmpPacket = headers.IcmpHeader(buf[14 + 20:])
+            self.processIcmp(icmpPacket, origIpHeader, iface)
+        else:
+            return
+        '''
 
     def processIcmp(self, icmpPacket, origIpHeader, iface):
         """
@@ -192,6 +214,9 @@ class SimpleRouter(SimpleRouterBase):
 
         Decode ICMP packet and process ICMP pings (=send reply). All other incoming ICMP packets can be ignored.
         """
+        icmpheder = headers.IcmpHeader(type=0, code=0, sum=26887, id=0, seqNum=0, data=b'echo reply')
+        paket = origIpHeader + icmpheder.encode()
+        self.sendPacket(paket, iface.name)
         pass
 
     def processUdp(self, udpPacket, origIpHeader, iface):
