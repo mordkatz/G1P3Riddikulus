@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see <http://www.gnu.org/licenses/>.
 
-from router_base import SimpleRouterBase, PoxConnectorApp
+from router_base import SimpleRouterBase, PoxConnectorApp, utils
 
 from ridikkulus_routing_table import RoutingTable
 from ridikkulus_arp_cache import ArpCache
@@ -77,7 +77,7 @@ class SimpleRouter(SimpleRouterBase):
         if etherHeader.type == 0x0806:
             self.processArp(restOfPacket, etherHeader, iface)
         elif etherHeader.type == 0x0800:
-            self.processIp(self, restOfPacket, iface)
+            self.processIp(restOfPacket, iface)
         else:
             # ignore packets that neither ARP nor IP
             pass
@@ -103,10 +103,6 @@ class SimpleRouter(SimpleRouterBase):
 
         pkt = headers.ArpHeader(arpPacket)
         if pkt.op == 1:
-            # Then it is a request
-            #pkt.tip is the target ip address
-            destIP = pkt.tip
-            #requestIP = self.findIfaceByIp(destIP)
             if iface.ip == pkt.tip:
                 #pkt.tha is the target mac address /target hardware address
                 pkt.op = 2
@@ -119,11 +115,8 @@ class SimpleRouter(SimpleRouterBase):
                 # type  (2 bytes): packet type ID
                 newEtherHeader = headers.EtherHeader(dhost = pkt.tha, shost = iface.mac, type = 0x0806)
                 new_packet = newEtherHeader.encode() + pkt.encode()
-                #returnIFace = Interface("sw0-eth1", (pkt.sip, pkt.sha))
-                print("arp was hit")
                 print(iface)
                 self.sendPacket(new_packet, iface.name)
-                print("send was hit")
         elif pkt.op == 2:
             self.arpCache.handleIncomingArpReply(pkt)
         else:
@@ -145,7 +138,21 @@ class SimpleRouter(SimpleRouterBase):
           If no interface found, then this packet is for someone else and you should call self.processIpToForward()
         - If it is for the router, then call self.processIpToSelf
         """
-        pass
+
+        pkt = headers.IpHeader(ipPacket)
+
+        # Check for ipHeader checksum being correct
+        checksumPkt = headers.IpHeader(ipPacket[:20])
+        checksumPkt.sum = 0
+
+        if utils.checksum(checksumPkt.encode()) != pkt.sum and len(ipPacket) < 21:
+            # print("Checksum does not match. utils.checksum: {}, pkt.sum: {}".format(
+            #      utils.checksum(checksumPkt.encode()), pkt.sum))
+            pass
+        else:
+            pass
+            # print("Checksum values match!")
+
 
     def processIpToSelf(self, ipPacket, origIpHeader, iface):
         """

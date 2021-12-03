@@ -18,11 +18,8 @@ from .mac_address import MacAddress
 class Interface:
     def __init__(self, name, mac, ip):
         self.name = name
-        print("Hitting this line in Interface")
         self.mac = MacAddress(mac)
-        print("Hitting this line in Interface2")
         self.ip = IpAddress(ip)
-        print("Hitting this line in Interface3")
 
     def __str__(self):
       return "%s (%s, %s)" % (self.name, self.ip, self.mac)
