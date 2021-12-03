@@ -77,7 +77,7 @@ class SimpleRouter(SimpleRouterBase):
         if etherHeader.type == 0x0806:
             self.processArp(restOfPacket, etherHeader, iface)
         elif etherHeader.type == 0x0800:
-            self.processIp(restOfPacket, iface)
+            self.processIp(restOfPacket, etherHeader, iface)
         else:
             # ignore packets that neither ARP nor IP
             pass
@@ -123,7 +123,7 @@ class SimpleRouter(SimpleRouterBase):
             pass
 
 
-    def processIp(self, ipPacket, iface):
+    def processIp(self, ipPacket, etherHead ,iface):
         """
         SUGGESTED IMPLEMENTATION LOGIC
         You are free to implement this method and relevant calling methods in other methods
@@ -148,10 +148,12 @@ class SimpleRouter(SimpleRouterBase):
         if utils.checksum(checksumPkt.encode()) != pkt.sum or len(ipPacket) < 21:
             """print("Checksum does not match. utils.checksum: {}, pkt.sum: {}".format(
                 utils.checksum(checksumPkt.encode()), pkt.sum))
-            rpkt = headers.IpHeader(hl=5, tos=0, len=84, id=42095, off=0, ttl=53, p=1, sum=47603, src=iface.ip,
-                                   dst=pkt.src)
-            buf = rpkt.encode()
-            self.sendPacket(buf, iface.name)"""
+            '''rpkt = pkt
+            rpkt.src = pkt.dst
+            rpkt.dst = pkt.src
+            newEtherHeader = headers.EtherHeader(dhost=etherHead.shost, shost=iface.mac, type=0x0800)
+            buf = newEtherHeader.encode() + rpkt.encode()
+            self.sendPacket(buf, iface.name) '''
             return
         else:
             pass
