@@ -313,7 +313,30 @@ class SimpleRouter(SimpleRouterBase):
           stays original, .gw only used to lookup MAC address of the gateway!
 
         """
-        pass
+
+        PATHVAR = 1
+        if PATHVAR == 1:
+            newEtherHeader = self.createEtherReturnHeader(etherHead)
+            newIpHeader = self.createIpReturnHeader(pkt)
+            newIpHeader.sum = utils.checksum(newIpHeader.encode())
+            newIcmpHeader = self.createIcmpReturnHeader(icmp)
+            newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
+            new_packet = newEtherHeader.encode() + newIpHeader.encode() + \
+                         newIcmpHeader.encode()
+            self.sendPacket(new_packet, iface.name)
+        else:
+            entry = self.routingTable.lookup(pkt.dst)
+            if entry is not None:
+                if entry.gw == type(entry.gw)("0.0.0.0"):
+                    arpEntry = self.arpCache.lookup(origIpHeader.dst)
+                else:
+                    arpEntry = self.arpCache.lookup(entry.gw)
+                if arpEntry is not None:
+                    newEtherHeader = headers.EtherHeader(dhost= arpEntry.mac,shost= iface.mac,type= iface.type)
+                    new_packet = newEtherHeader.encode() + pkt.encode()
+                    self.sendPacket(new_packet, iface.name)
+
+            pass
 
     #
     # USE THIS METHOD TO SEND PACKETS OUT

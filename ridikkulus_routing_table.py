@@ -29,8 +29,12 @@ class RoutingTable(RoutingTableBase):
         #   int(entry.dest)
         #   int(entry.mask)
         #   int(entry.gw)
-        
+        for entry in self.entries:
+            print(entry.dest)
+            if ip == entry.dest:
+                return entry
+
         ##########################
         ## TODO: IMPLEMENT THIS ##
         ##########################
-        raise RuntimeError("NOT IMPLEMENTED YET")
+        #raise RuntimeError("NOT IMPLEMENTED YET")
