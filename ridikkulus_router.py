@@ -157,7 +157,7 @@ class SimpleRouter(SimpleRouterBase):
             if pkt.ttl > 0:
                 if iface.ip == pkt.dst:
                     logVerboseMessage("IP Packet Destination IP matches this Router")
-                    self.processIpToSelf(ipPacket, etherHead, iface)
+                    self.processIpToSelf(ipPacket, pkt, iface)
                 else:
                     logVerboseMessage("IP Packet Destination IP DOES NOT match router, forwarding..")
                     self.processIpToForward(ipPacket, pkt, iface)
@@ -182,20 +182,21 @@ class SimpleRouter(SimpleRouterBase):
         # I am not actually sure what origIpHeader is supposed to equal I am just assuming if it is 1 then it is a
         # UDP packet and if it is 2 than it is a ICMP packet
         #because I am not sure I just want to try proccessing ICMP packets
-        print("in processIpToSelf")
+        logVerboseMessage("in processIpToSelf")
         icmpPacket = headers.IcmpHeader(origIpHeader[14 + 20:])
         print(icmpPacket)
         self.processIcmp(icmpPacket, origIpHeader, iface)
 
-        if origIpHeader.p == 1:
+        if origIpHeader.p == 2:
             # I have to get the udp packet this should be everything but the originalIpHeader
             # I don't understand why udpPacketHeader is not in headers.py nor in the instructions
             #udpPacket = headers.
             #slef.processUdp(udpPacket, origIpHeader, iface
             pass
-        elif origIpHeader.p == 2:
+        elif origIpHeader.p == 1:
             #I have to get the ICMP packet this should be everything but the originalIpHeader
-            icmpPacket = headers.IcmpHeader(buf[14 + 20:])
+            logVerboseMessage("hit")
+            #icmpPacket = headers.IcmpHeader(buf[14 + 20:])
             self.processIcmp(icmpPacket, origIpHeader, iface)
         else:
             return
@@ -215,8 +216,8 @@ class SimpleRouter(SimpleRouterBase):
         print("in processIcmp")
         icmpheder = headers.IcmpHeader(type=0, code=0, sum=icmpPacket.sum, id=0, seqNum=icmpPacket.seqNum, data=b'echo reply')
         pkt = headers.IpHeader(origIpHeader)
-        # I don't think all the values in here are correct
-        ippacket = headers.IpHeader(hl=0, tos=0, len=pkt.len, id=0, off=0, ttl=0, p=0, sum=pkt.sum, src=iface.ip, dst=pkt.src)
+        ippacket = headers.IpHeader(hl=pkt.hl, tos=pkt.tos, len=pkt.len, id=pkt.id, off=pkt.off, ttl=pkt.ttl,
+                                    p=0, sum=pkt.sum, src=iface.ip, dst=pkt.src)
         etherHeader = headers.EtherHeader(dhost = origIpHeader.shost, shost = iface.mac, type = 0x0800)
         paket = etherHeader.encode()  + ippacket.encode() + icmpheder.encode()
         print("trying to send packet")
