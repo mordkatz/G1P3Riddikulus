@@ -27,7 +27,7 @@ from router_base.utils import checksum, print_hdrs
 
 import sys
 
-DEBUG = True
+DEBUG = False
 
 
 def logVerboseMessage(s):
@@ -57,7 +57,7 @@ class SimpleRouter(SimpleRouterBase):
 
         logVerboseMessage(
             "####################################################\nPacket received...\n")
-        utils.print_hdrs(origPacket)
+        #utils.print_hdrs(origPacket)
         logVerboseMessage("\n####################################################\n")
 
         # Ethernet
@@ -329,7 +329,7 @@ class SimpleRouter(SimpleRouterBase):
 
         logVerboseMessage(
             "####################################################\nPacket sending...\n")
-        utils.print_hdrs(packet)
+        #utils.print_hdrs(packet)
         logVerboseMessage("\n####################################################\n")
         super().sendPacket(packet, outIface)
 
