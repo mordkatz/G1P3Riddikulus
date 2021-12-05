@@ -148,7 +148,7 @@ class SimpleRouter(SimpleRouterBase):
 
         # Check for ipHeader checksum being correct
         checksumPkt = headers.IpHeader(ipPacket[:20])
-        # checksumPkt.sum = 0
+        checksumPkt.sum = 0
 
         if utils.checksum(checksumPkt.encode()) != pkt.sum or len(ipPacket) < 21:
             # print("Checksum does not match. utils.checksum: {}, pkt.sum: {}".format(
@@ -173,8 +173,8 @@ class SimpleRouter(SimpleRouterBase):
                                            off=pkt.off, ttl=pkt.ttl,
                                            p=pkt.p, sum=0, src=pkt.dst, dst=pkt.src)
             newIpHeader.sum = utils.checksum(newIpHeader.encode())
-            newIcmpHeader = headers.IcmpHeader(type= 0, code= 0, sum= 0, id = 0, seqNum = 2,
-                                               data = icmp.data)
+            newIcmpHeader = headers.IcmpHeader(type= 0, code= 0, sum= 0, id = icmp.id,
+                                               seqNum = icmp.seqNum, data = icmp.data)
             newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
             # print("newIcmpHeader checksum: ", newIcmpHeader.sum)
             new_packet = newEtherHeader.encode() + newIpHeader.encode() + newIcmpHeader.encode()
