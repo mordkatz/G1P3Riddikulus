@@ -127,6 +127,21 @@ class SimpleRouter(SimpleRouterBase):
         else:
             pass
 
+    def createEtherReturnHeader(self, etherHead):
+        return headers.EtherHeader(dhost=etherHead.shost,
+                            shost=etherHead.dhost,
+                            type=0x0800)
+
+    def createIpReturnHeader(self, pkt):
+        return headers.IpHeader(hl=pkt.hl, tos=pkt.tos, len=pkt.len, id=pkt.id,
+                                                   off=pkt.off, ttl=pkt.ttl,
+                                                   p=pkt.p, sum=0, src=pkt.dst, dst=pkt.src)
+
+    def createIcmpReturnHeader(self, icmp):
+        return headers.IcmpHeader(type=0, code=0, sum=0, id=icmp.id,
+                                                       seqNum=icmp.seqNum, data=icmp.data)
+
+
     def processIp(self, ipPacket, etherHead ,iface):
         """
         SUGGESTED IMPLEMENTATION LOGIC
@@ -151,35 +166,7 @@ class SimpleRouter(SimpleRouterBase):
         checksumPkt.sum = 0
 
         if utils.checksum(checksumPkt.encode()) != pkt.sum or len(ipPacket) < 21:
-            # print("Checksum does not match. utils.checksum: {}, pkt.sum: {}".format(
-            #    utils.checksum(checksumPkt.encode()), pkt.sum))
-
-            newEtherHeader = headers.EtherHeader(dhost= etherHead.shost,
-                                                 shost= etherHead.dhost,
-                                                 type=0x0800)
-
-            # v  (4 bits):   IPv4 version (4 bits)
-            # hl (4 bits):   Header length (4 bits)
-            # tos (1 byte):  type of service
-            # len (2 bytes): total length
-            # id  (2 bytes): identification
-            # off (2 bytes): fragment offset field and flags
-            # ttl (1 byte):  time to live
-            # p   (1 byte):  protocol
-            # sum (2 bytes): checksum
-            # src (4 bytes): source address
-            # dst (4 bytes): dest address
-            newIpHeader = headers.IpHeader(hl=pkt.hl, tos= pkt.tos, len=pkt.len, id=pkt.id,
-                                           off=pkt.off, ttl=pkt.ttl,
-                                           p=pkt.p, sum=0, src=pkt.dst, dst=pkt.src)
-            newIpHeader.sum = utils.checksum(newIpHeader.encode())
-            newIcmpHeader = headers.IcmpHeader(type= 0, code= 0, sum= 0, id = icmp.id,
-                                               seqNum = icmp.seqNum, data = icmp.data)
-            newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
-            # print("newIcmpHeader checksum: ", newIcmpHeader.sum)
-            new_packet = newEtherHeader.encode() + newIpHeader.encode() + newIcmpHeader.encode()
-            self.sendPacket(new_packet, iface.name)
-            logVerboseMessage("Packet should have been sent")
+            return
         else:
             logVerboseMessage("Checksum values match!")
             #print("Type of Service: {}, TTL: {}, Protocol: {}".format(pkt.tos, pkt.ttl, pkt.p))
@@ -188,19 +175,13 @@ class SimpleRouter(SimpleRouterBase):
                     logVerboseMessage("IP Packet Destination IP matches this Router")
 
                     ############ NEEDS TO BE CLEANED UP ############
-                    newEtherHeader = headers.EtherHeader(dhost=etherHead.shost,
-                                                         shost=etherHead.dhost,
-                                                         type=0x0800)
-
-                    newIpHeader = headers.IpHeader(hl=pkt.hl, tos=pkt.tos, len=pkt.len, id=pkt.id,
-                                                   off=pkt.off, ttl=pkt.ttl,
-                                                   p=pkt.p, sum=0, src=pkt.dst, dst=pkt.src)
+                    newEtherHeader = self.createEtherReturnHeader(etherHead)
+                    newIpHeader = self.createIpReturnHeader(pkt)
                     newIpHeader.sum = utils.checksum(newIpHeader.encode())
-                    newIcmpHeader = headers.IcmpHeader(type=0, code=0, sum=0, id=icmp.id,
-                                                       seqNum=icmp.seqNum, data=icmp.data)
+                    newIcmpHeader = self.createIcmpReturnHeader(icmp)
                     newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
-                    # print("newIcmpHeader checksum: ", newIcmpHeader.sum)
-                    new_packet = newEtherHeader.encode() + newIpHeader.encode() + newIcmpHeader.encode()
+                    new_packet = newEtherHeader.encode() + newIpHeader.encode() + \
+                                 newIcmpHeader.encode()
                     self.sendPacket(new_packet, iface.name)
                     # self.processIpToSelf(ipPacket, pkt, iface)
 
@@ -209,25 +190,26 @@ class SimpleRouter(SimpleRouterBase):
                 else:
                     logVerboseMessage("IP Packet Destination IP DOES NOT match router, forwarding..")
                     ############ NEEDS TO BE CLEANED UP ############
-                    newEtherHeader = headers.EtherHeader(dhost=etherHead.shost,
-                                                         shost=etherHead.dhost,
-                                                         type=0x0800)
-
-                    newIpHeader = headers.IpHeader(hl=pkt.hl, tos=pkt.tos, len=pkt.len, id=pkt.id,
-                                                   off=pkt.off, ttl=pkt.ttl,
-                                                   p=pkt.p, sum=0, src=pkt.dst, dst=pkt.src)
+                    newEtherHeader = self.createEtherReturnHeader(etherHead)
+                    newIpHeader = self.createIpReturnHeader(pkt)
                     newIpHeader.sum = utils.checksum(newIpHeader.encode())
-                    newIcmpHeader = headers.IcmpHeader(type=0, code=0, sum=0, id=icmp.id,
-                                                       seqNum=icmp.seqNum, data=icmp.data)
+                    newIcmpHeader = self.createIcmpReturnHeader(icmp)
                     newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
-                    # print("newIcmpHeader checksum: ", newIcmpHeader.sum)
-                    new_packet = newEtherHeader.encode() + newIpHeader.encode() + newIcmpHeader.encode()
+                    new_packet = newEtherHeader.encode() + newIpHeader.encode() + \
+                                 newIcmpHeader.encode()
                     self.sendPacket(new_packet, iface.name)
                     # self.processIpToForward(ipPacket, pkt, iface)
-
                     ########### ABOVE NEEDS TO BE CLEANED UP ###############
             else:
-                return
+                newEtherHeader = self.createEtherReturnHeader(etherHead)
+                newIpHeader = self.createIpReturnHeader(pkt)
+                newIpHeader.sum = utils.checksum(newIpHeader.encode())
+                newIcmpHeader = self.createIcmpReturnHeader(icmp)
+                newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
+                newIcmpHeader.type = 11
+                new_packet = newEtherHeader.encode() + newIpHeader.encode() + \
+                             newIcmpHeader.encode()
+                self.sendPacket(new_packet, iface.name)
 
 
 
@@ -243,7 +225,8 @@ class SimpleRouter(SimpleRouterBase):
         a UDP packet to a random port when traceroute is used.  Therefore, you need to decode
         ipPacket and determine which is which, ignoring any other types of packets (e.g., TCP).
         """
-        # I am not actually sure what origIpHeader is supposed to equal I am just assuming if it is 1 then it is a
+        # I am not actually sure what origIpHeader is supposed to equal I am just assuming if it is
+        # 1 then it is a
         # UDP packet and if it is 2 than it is a ICMP packet
         #because I am not sure I just want to try proccessing ICMP packets
         logVerboseMessage("in processIpToSelf")
@@ -275,18 +258,10 @@ class SimpleRouter(SimpleRouterBase):
 
         \p iface instance of Interface class (it has .name, .mac, and .ip members)
 
-        Decode ICMP packet and process ICMP pings (=send reply). All other incoming ICMP packets can be ignored.
+        Decode ICMP packet and process ICMP pings (=send reply). All other incoming ICMP packets
+        can be ignored.
         """
         logVerboseMessage("in processIcmp")
-        icmpheder = headers.IcmpHeader(type=0, code=0, sum=icmpPacket.sum, id=0, seqNum=icmpPacket.seqNum, data=b'echo reply')
-        pkt = headers.IpHeader(origIpHeader)
-        ippacket = headers.IpHeader(hl=pkt.hl, tos=pkt.tos, len=pkt.len, id=pkt.id, off=pkt.off, ttl=pkt.ttl,
-                                    p=0, sum=pkt.sum, src=iface.ip, dst=pkt.src)
-        etherHeader = headers.EtherHeader(dhost = origIpHeader.shost, shost = iface.mac, type = 0x0800)
-        paket = etherHeader.encode()  + ippacket.encode() + icmpheder.encode()
-        logVerboseMessage("trying to send packet")
-        self.sendPacket(paket, iface.name)
-        logVerboseMessage("packet sent")
         pass
 
     def processUdp(self, udpPacket, origIpHeader, iface):
