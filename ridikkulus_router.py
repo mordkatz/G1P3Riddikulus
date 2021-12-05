@@ -27,7 +27,7 @@ from router_base.utils import checksum, print_hdrs
 
 import sys
 
-DEBUG = False
+DEBUG = True
 
 
 def logVerboseMessage(s):
@@ -57,7 +57,7 @@ class SimpleRouter(SimpleRouterBase):
 
         logVerboseMessage(
             "####################################################\nPacket received...\n")
-        # utils.print_hdrs(origPacket)
+        utils.print_hdrs(origPacket)
         logVerboseMessage("\n####################################################\n")
 
         # Ethernet
@@ -285,7 +285,7 @@ class SimpleRouter(SimpleRouterBase):
 
         """
 
-        PATHVAR = 1
+        PATHVAR = 2
         if PATHVAR == 1:
             newEtherHeader = self.createEtherReturnHeader(etherHead)
             newIpHeader = self.createIpReturnHeader(pkt)
@@ -299,7 +299,7 @@ class SimpleRouter(SimpleRouterBase):
             entry = self.routingTable.lookup(pkt.dst)
             if entry is not None:
                 if entry.gw == type(entry.gw)("0.0.0.0"):
-                    arpEntry = self.arpCache.lookup(origIpHeader.dst)
+                    arpEntry = self.arpCache.lookup(pkt.dst)
                 else:
                     arpEntry = self.arpCache.lookup(entry.gw)
                 if arpEntry is not None:
@@ -329,7 +329,7 @@ class SimpleRouter(SimpleRouterBase):
 
         logVerboseMessage(
             "####################################################\nPacket sending...\n")
-        # utils.print_hdrs(packet)
+        utils.print_hdrs(packet)
         logVerboseMessage("\n####################################################\n")
         super().sendPacket(packet, outIface)
 

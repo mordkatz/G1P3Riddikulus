@@ -45,8 +45,14 @@ class ArpCache(ArpCacheBase):
                 send all packets on the req->packets linked list
                 cache.removeRequest(req)
         '''
+        # Lookup request using the decoded arpHeader
+        incomingArpReply = headers.ArpHeader(arpHeader)
+        req = cache.insertArpEntry(incomingArpReply.sip, incomingArpReply.sha)
+        if req:
+            cache.removeRequest(req)
 
-        pass
+        print("This is the Arp Response: ", req)
+
 
     def resendOrRemoveQueuedRequest(self, req):
         '''
