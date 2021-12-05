@@ -157,7 +157,7 @@ class SimpleRouter(SimpleRouterBase):
             newEtherHeader = headers.EtherHeader(dhost= etherHead.shost,
                                                  shost= etherHead.dhost,
                                                  type=0x0800)
-            # I don't think all the values in here are correct
+
             # v  (4 bits):   IPv4 version (4 bits)
             # hl (4 bits):   Header length (4 bits)
             # tos (1 byte):  type of service
@@ -186,7 +186,26 @@ class SimpleRouter(SimpleRouterBase):
             if pkt.ttl > 0:
                 if iface.ip == pkt.dst:
                     logVerboseMessage("IP Packet Destination IP matches this Router")
-                    self.processIpToSelf(ipPacket, pkt, iface)
+
+                    ############ NEEDS TO BE CLEANED UP ############
+                    newEtherHeader = headers.EtherHeader(dhost=etherHead.shost,
+                                                         shost=etherHead.dhost,
+                                                         type=0x0800)
+
+                    newIpHeader = headers.IpHeader(hl=pkt.hl, tos=pkt.tos, len=pkt.len, id=pkt.id,
+                                                   off=pkt.off, ttl=pkt.ttl,
+                                                   p=pkt.p, sum=0, src=pkt.dst, dst=pkt.src)
+                    newIpHeader.sum = utils.checksum(newIpHeader.encode())
+                    newIcmpHeader = headers.IcmpHeader(type=0, code=0, sum=0, id=icmp.id,
+                                                       seqNum=icmp.seqNum, data=icmp.data)
+                    newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
+                    # print("newIcmpHeader checksum: ", newIcmpHeader.sum)
+                    new_packet = newEtherHeader.encode() + newIpHeader.encode() + newIcmpHeader.encode()
+                    self.sendPacket(new_packet, iface.name)
+                    # self.processIpToSelf(ipPacket, pkt, iface)
+
+                    ########### ABOVE NEEDS TO BE CLEANED UP #################
+
                 else:
                     logVerboseMessage("IP Packet Destination IP DOES NOT match router, forwarding..")
                     self.processIpToForward(ipPacket, pkt, iface)
@@ -212,7 +231,7 @@ class SimpleRouter(SimpleRouterBase):
         # UDP packet and if it is 2 than it is a ICMP packet
         #because I am not sure I just want to try proccessing ICMP packets
         logVerboseMessage("in processIpToSelf")
-        icmpPacket = headers.IcmpHeader(origIpHeader[14 + 20:])
+        icmpPacket = headers.IcmpHeader(origIpHeader.encode()[14:])
         # print(icmpPacket)
         self.processIcmp(icmpPacket, origIpHeader, iface)
 
