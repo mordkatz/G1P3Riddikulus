@@ -210,6 +210,7 @@ class SimpleRouter(SimpleRouterBase):
                 new_packet = newEtherHeader.encode() + newIpHeader.encode() + \
                              newIcmpHeader.encode()
                 self.sendPacket(new_packet, iface.name)
+                return
 
 
 
