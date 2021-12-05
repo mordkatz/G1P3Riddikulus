@@ -306,6 +306,17 @@ class SimpleRouter(SimpleRouterBase):
                     newEtherHeader = headers.EtherHeader(dhost= arpEntry.mac,shost= iface.mac,type= iface.type)
                     new_packet = newEtherHeader.encode() + pkt.encode()
                     self.sendPacket(new_packet, iface.name)
+                else:
+                    #what should the destination mac address be
+                    newEtherHeader = headers.EtherHeader(dhost="ff:ff:ff:ff:ff:ff",shost=iface.mac, type= 0x0806)
+
+                    # I am not sure about the entry stuff and I need to find out what hrd, pro, hln, pln should be
+                    arpHeader = headers.ArpHeader(op=2, sha=iface.mac, sip=iface.ip,
+                                                  tha="00:00:00:00:00:00", tip=pkt.dst)
+                    new_packet = newEtherHeader.encode() + arpHeader.encode()
+                    self.sendPacket(new_packet, iface.name)
+                    self.arpCache.queueRequest(pkt.dst, pkt, iface)
+                    pass
 
             pass
 
