@@ -172,34 +172,12 @@ class SimpleRouter(SimpleRouterBase):
             if pkt.ttl > 0:
                 if iface.ip == pkt.dst:
                     logVerboseMessage("IP Packet Destination IP matches this Router")
-
-                    ############ NEEDS TO BE CLEANED UP ############
-                    newEtherHeader = self.createEtherReturnHeader(etherHead)
-                    newIpHeader = self.createIpReturnHeader(pkt)
-                    newIpHeader.sum = utils.checksum(newIpHeader.encode())
-                    newIcmpHeader = self.createIcmpReturnHeader(icmp)
-                    newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
-                    new_packet = newEtherHeader.encode() + newIpHeader.encode() + \
-                                 newIcmpHeader.encode()
-                    self.sendPacket(new_packet, iface.name)
-                    # self.processIpToSelf(ipPacket, pkt, iface)
-
-                    ########### ABOVE NEEDS TO BE CLEANED UP #################
-
+                    self.processIpToSelf(etherHead, pkt, icmp, iface)
                 else:
                     logVerboseMessage(
-                        "IP Packet Destination IP DOES NOT match router, forwarding..")
-                    ############ NEEDS TO BE CLEANED UP ############
-                    newEtherHeader = self.createEtherReturnHeader(etherHead)
-                    newIpHeader = self.createIpReturnHeader(pkt)
-                    newIpHeader.sum = utils.checksum(newIpHeader.encode())
-                    newIcmpHeader = self.createIcmpReturnHeader(icmp)
-                    newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
-                    new_packet = newEtherHeader.encode() + newIpHeader.encode() + \
-                                 newIcmpHeader.encode()
-                    self.sendPacket(new_packet, iface.name)
-                    # self.processIpToForward(ipPacket, pkt, iface)
-                    ########### ABOVE NEEDS TO BE CLEANED UP ###############
+                        "IP Packet Destination IP DOES NOT match router")
+                    self.processIpToForward(etherHead, pkt, icmp, iface)
+
             else:
                 newEtherHeader = self.createEtherReturnHeader(etherHead)
                 newIpHeader = self.createIpReturnHeader(pkt)
@@ -212,7 +190,7 @@ class SimpleRouter(SimpleRouterBase):
                 self.sendPacket(new_packet, iface.name)
                 return
 
-    def processIpToSelf(self, ipPacket, origIpHeader, iface):
+    def processIpToSelf(self, etherHead, pkt, icmp, iface):
         """
         SUGGESTED IMPLEMENTATION LOGIC
         You are free to implement this method and relevant calling methods in other methods
@@ -224,30 +202,14 @@ class SimpleRouter(SimpleRouterBase):
         a UDP packet to a random port when traceroute is used.  Therefore, you need to decode
         ipPacket and determine which is which, ignoring any other types of packets (e.g., TCP).
         """
-        # I am not actually sure what origIpHeader is supposed to equal I am just assuming if it is
-        # 1 then it is a
-        # UDP packet and if it is 2 than it is a ICMP packet
-        # because I am not sure I just want to try proccessing ICMP packets
-        logVerboseMessage("in processIpToSelf")
-        icmpPacket = headers.IcmpHeader(origIpHeader.encode()[14:])
-        # print(icmpPacket)
-        self.processIcmp(icmpPacket, origIpHeader, iface)
-
-        if origIpHeader.p == 2:
-            # I have to get the udp packet this should be everything but the originalIpHeader
-            # I don't understand why udpPacketHeader is not in headers.py nor in the instructions
-            # udpPacket = headers.
-            # slef.processUdp(udpPacket, origIpHeader, iface
-            pass
-        elif origIpHeader.p == 1:
-            # I have to get the ICMP packet this should be everything but the originalIpHeader
-            logVerboseMessage("hit")
-            # icmpPacket = headers.IcmpHeader(buf[14 + 20:])
-            self.processIcmp(icmpPacket, origIpHeader, iface)
-        else:
-            return
-
-        pass
+        newEtherHeader = self.createEtherReturnHeader(etherHead)
+        newIpHeader = self.createIpReturnHeader(pkt)
+        newIpHeader.sum = utils.checksum(newIpHeader.encode())
+        newIcmpHeader = self.createIcmpReturnHeader(icmp)
+        newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
+        new_packet = newEtherHeader.encode() + newIpHeader.encode() + \
+                     newIcmpHeader.encode()
+        self.sendPacket(new_packet, iface.name)
 
     def processIcmp(self, icmpPacket, origIpHeader, iface):
         """
@@ -263,7 +225,7 @@ class SimpleRouter(SimpleRouterBase):
         logVerboseMessage("in processIcmp")
         pass
 
-    def processUdp(self, udpPacket, origIpHeader, iface):
+    def processUdp(self, etherHead, pkt, icmp, iface):
         """
         SUGGESTED IMPLEMENTATION LOGIC
         You are free to implement this method and relevant calling methods in other methods
@@ -274,9 +236,18 @@ class SimpleRouter(SimpleRouterBase):
         You don't actually decode udpPacket, but rather just implement ICMP destination port
         unreachable response.
         """
-        pass
+        newEtherHeader = self.createEtherReturnHeader(etherHead)
+        newIpHeader = self.createIpReturnHeader(pkt)
+        newIpHeader.sum = utils.checksum(newIpHeader.encode())
+        newIcmpHeader = self.createIcmpReturnHeader(icmp)
+        newIcmpHeader.type = 11
+        newIcmpHeader.code = 1
+        newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
+        new_packet = newEtherHeader.encode() + newIpHeader.encode() + \
+                     newIcmpHeader.encode()
+        self.sendPacket(new_packet, iface.name)
 
-    def processIpToForward(self, ipPacket, origIpHeader, iface):
+    def processIpToForward(self, etherHead, pkt, icmp, iface):
         """
         SUGGESTED IMPLEMENTATION LOGIC
         You are free to implement this method and relevant calling methods in other methods
