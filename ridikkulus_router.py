@@ -27,7 +27,7 @@ from router_base.utils import checksum, print_hdrs
 
 import sys
 
-DEBUG = True
+DEBUG = False
 
 
 def logVerboseMessage(s):
@@ -54,6 +54,11 @@ class SimpleRouter(SimpleRouterBase):
             return
 
         # all incoming packets are guaranteed to be Ethernet, so unconditionally process them as
+
+        logVerboseMessage("####################################################\nPacket received...\n")
+        #utils.print_hdrs(origPacket)
+        logVerboseMessage("\n####################################################\n")
+
         # Ethernet
         self.processEther(origPacket, iface)
 
@@ -115,13 +120,12 @@ class SimpleRouter(SimpleRouterBase):
                 # type  (2 bytes): packet type ID
                 newEtherHeader = headers.EtherHeader(dhost = pkt.tha, shost = iface.mac, type = 0x0806)
                 new_packet = newEtherHeader.encode() + pkt.encode()
-                print(iface)
+                # print(iface)
                 self.sendPacket(new_packet, iface.name)
         elif pkt.op == 2:
             self.arpCache.handleIncomingArpReply(pkt)
         else:
             pass
-
 
     def processIp(self, ipPacket, etherHead ,iface):
         """
@@ -140,20 +144,45 @@ class SimpleRouter(SimpleRouterBase):
         """
 
         pkt = headers.IpHeader(ipPacket)
+        icmp = headers.IcmpHeader(ipPacket[20:])
 
         # Check for ipHeader checksum being correct
         checksumPkt = headers.IpHeader(ipPacket[:20])
-        checksumPkt.sum = 0
+        # checksumPkt.sum = 0
 
         if utils.checksum(checksumPkt.encode()) != pkt.sum or len(ipPacket) < 21:
-            print("Checksum does not match. utils.checksum: {}, pkt.sum: {}".format(
-                utils.checksum(checksumPkt.encode()), pkt.sum))
+            # print("Checksum does not match. utils.checksum: {}, pkt.sum: {}".format(
+            #    utils.checksum(checksumPkt.encode()), pkt.sum))
 
-            #self.sendPacket(buf, iface.name)
-            return
+            newEtherHeader = headers.EtherHeader(dhost= etherHead.shost,
+                                                 shost= etherHead.dhost,
+                                                 type=0x0800)
+            # I don't think all the values in here are correct
+            # v  (4 bits):   IPv4 version (4 bits)
+            # hl (4 bits):   Header length (4 bits)
+            # tos (1 byte):  type of service
+            # len (2 bytes): total length
+            # id  (2 bytes): identification
+            # off (2 bytes): fragment offset field and flags
+            # ttl (1 byte):  time to live
+            # p   (1 byte):  protocol
+            # sum (2 bytes): checksum
+            # src (4 bytes): source address
+            # dst (4 bytes): dest address
+            newIpHeader = headers.IpHeader(hl=pkt.hl, tos= pkt.tos, len=pkt.len, id=pkt.id,
+                                           off=pkt.off, ttl=pkt.ttl,
+                                           p=pkt.p, sum=0, src=pkt.dst, dst=pkt.src)
+            newIpHeader.sum = utils.checksum(newIpHeader.encode())
+            newIcmpHeader = headers.IcmpHeader(type= 0, code= 0, sum= 0, id = 0, seqNum = 2,
+                                               data = icmp.data)
+            newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
+            # print("newIcmpHeader checksum: ", newIcmpHeader.sum)
+            new_packet = newEtherHeader.encode() + newIpHeader.encode() + newIcmpHeader.encode()
+            self.sendPacket(new_packet, iface.name)
+            logVerboseMessage("Packet should have been sent")
         else:
-            print("Checksum values match!")
-            print("Type of Service: {}, TTL: {}, Protocol: {}".format(pkt.type, pkt.ttl, pkt.p))
+            logVerboseMessage("Checksum values match!")
+            #print("Type of Service: {}, TTL: {}, Protocol: {}".format(pkt.tos, pkt.ttl, pkt.p))
             if pkt.ttl > 0:
                 if iface.ip == pkt.dst:
                     logVerboseMessage("IP Packet Destination IP matches this Router")
@@ -184,7 +213,7 @@ class SimpleRouter(SimpleRouterBase):
         #because I am not sure I just want to try proccessing ICMP packets
         logVerboseMessage("in processIpToSelf")
         icmpPacket = headers.IcmpHeader(origIpHeader[14 + 20:])
-        print(icmpPacket)
+        # print(icmpPacket)
         self.processIcmp(icmpPacket, origIpHeader, iface)
 
         if origIpHeader.p == 2:
@@ -213,16 +242,16 @@ class SimpleRouter(SimpleRouterBase):
 
         Decode ICMP packet and process ICMP pings (=send reply). All other incoming ICMP packets can be ignored.
         """
-        print("in processIcmp")
+        logVerboseMessage("in processIcmp")
         icmpheder = headers.IcmpHeader(type=0, code=0, sum=icmpPacket.sum, id=0, seqNum=icmpPacket.seqNum, data=b'echo reply')
         pkt = headers.IpHeader(origIpHeader)
         ippacket = headers.IpHeader(hl=pkt.hl, tos=pkt.tos, len=pkt.len, id=pkt.id, off=pkt.off, ttl=pkt.ttl,
                                     p=0, sum=pkt.sum, src=iface.ip, dst=pkt.src)
         etherHeader = headers.EtherHeader(dhost = origIpHeader.shost, shost = iface.mac, type = 0x0800)
         paket = etherHeader.encode()  + ippacket.encode() + icmpheder.encode()
-        print("trying to send packet")
+        logVerboseMessage("trying to send packet")
         self.sendPacket(paket, iface.name)
-        print("packet sent")
+        logVerboseMessage("packet sent")
         pass
 
     def processUdp(self, udpPacket, origIpHeader, iface):
@@ -233,7 +262,8 @@ class SimpleRouter(SimpleRouterBase):
 
         \p iface instance of Interface class (it has .name, .mac, and .ip members)
 
-        You don't actually decode udpPacket, but rather just implement ICMP destination port unreachable response.
+        You don't actually decode udpPacket, but rather just implement ICMP destination port
+        unreachable response.
         """
         pass
 
@@ -282,6 +312,10 @@ class SimpleRouter(SimpleRouterBase):
     # Call this method to send packet \p packet from the router on interface \p outIface
     #
     def sendPacket(self, packet, outIface):
+
+        logVerboseMessage("####################################################\nPacket sending...\n")
+        # utils.print_hdrs(packet)
+        logVerboseMessage("\n####################################################\n")
         super().sendPacket(packet, outIface)
 
     ##############################################################################
