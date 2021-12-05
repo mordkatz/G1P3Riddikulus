@@ -208,8 +208,24 @@ class SimpleRouter(SimpleRouterBase):
 
                 else:
                     logVerboseMessage("IP Packet Destination IP DOES NOT match router, forwarding..")
-                    self.processIpToForward(ipPacket, pkt, iface)
-                    pass
+                    ############ NEEDS TO BE CLEANED UP ############
+                    newEtherHeader = headers.EtherHeader(dhost=etherHead.shost,
+                                                         shost=etherHead.dhost,
+                                                         type=0x0800)
+
+                    newIpHeader = headers.IpHeader(hl=pkt.hl, tos=pkt.tos, len=pkt.len, id=pkt.id,
+                                                   off=pkt.off, ttl=pkt.ttl,
+                                                   p=pkt.p, sum=0, src=pkt.dst, dst=pkt.src)
+                    newIpHeader.sum = utils.checksum(newIpHeader.encode())
+                    newIcmpHeader = headers.IcmpHeader(type=0, code=0, sum=0, id=icmp.id,
+                                                       seqNum=icmp.seqNum, data=icmp.data)
+                    newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
+                    # print("newIcmpHeader checksum: ", newIcmpHeader.sum)
+                    new_packet = newEtherHeader.encode() + newIpHeader.encode() + newIcmpHeader.encode()
+                    self.sendPacket(new_packet, iface.name)
+                    # self.processIpToForward(ipPacket, pkt, iface)
+
+                    ########### ABOVE NEEDS TO BE CLEANED UP ###############
             else:
                 return
 
