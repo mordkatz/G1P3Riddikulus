@@ -152,14 +152,18 @@ class SimpleRouter(SimpleRouterBase):
             #self.sendPacket(buf, iface.name)
             return
         else:
-            # print("Checksum values match!")
-            if iface.ip == pkt.dst:
-                logVerboseMessage("IP Packet Destination IP matches this Router")
-                self.processIpToSelf(pkt, etherHead, iface)
+            print("Checksum values match!")
+            print("Type of Service: {}, TTL: {}, Protocol: {}".format(pkt.type, pkt.ttl, pkt.p))
+            if pkt.ttl > 0:
+                if iface.ip == pkt.dst:
+                    logVerboseMessage("IP Packet Destination IP matches this Router")
+                    self.processIpToSelf(ipPacket, etherHead, iface)
+                else:
+                    logVerboseMessage("IP Packet Destination IP DOES NOT match router, forwarding..")
+                    self.processIpToForward(ipPacket, pkt, iface)
+                    pass
             else:
-                logVerboseMessage("IP Packet Destination IP DOES NOT match router, forwarding..")
-                self.processIpToForward(ipPacket, pkt, iface)
-                pass
+                return
 
 
 
