@@ -1,30 +1,26 @@
 Project 3 (Ridikkulus Router)
 =============================
 
-(For build dependencies, please refer to [`router_base/Vagrantfile`](router_base/Vagrantfile).)
+The following project establishes a simple router with a static routing table which handles Ethernet frames, ARP packets, IPv4 packets, and ICMP packets. It is capable of forwarding as well as creating new frames, the client is able to properly ping all servers with the proper TTLs, and only the correct ARP requests are responded to. The project uses a combination of mininet and vagrant in order to test the connection between the router and client.
+We were not able to establish tracerouting as we ran into various problems with the established code.
 
-The starter code includes only the framework to receive raw Ethernet frames and to send Ethernet frames to the desired interfaces.  Your job is to implement the routers logic.
+## Problems
+1.
+- a
+2.
+- b
 
-## Note for Gradescope Submission
+## Libraries
+- Mininet
+- Vagrant
 
-This project can only be submitted to Gradescope via connection to GitHub (no raw file upload).
+## Project Members
+- **Mordechai Katz** | 
 
-## Academic Integrity Note
+Only student able to run Vagrant and Mininet due to installation issues. Committed the code we all worked on. Worked on the general logic of ___________
+- **Andrew Van Ryn** |
 
-You are encouraged to host your code in private repositories on [GitHub](https://github.com/).  At the same time, you are PROHIBITED to make your code for the class project public during the class or any time after the class.  If you do so, you will be violating academic honestly policy that you have signed, as well as the student code of conduct and be subject to serious sanctions.
+**Main lead** | Took charge in most of the code, helped solved most of the problems including ___________
+- **Jonathan Zamora** | 6122352
 
-## Known Limitations
-
-When POX controller is restrated, the simpler router needs to be manually stopped and started again.
-
-## Acknowledgement
-
-This implementation is roughly based on the original code for Stanford CS144 lab3 (https://bitbucket.org/cs144-1617/lab3).
-
-## TODO
-
-    ###########################################################
-    ##                                                       ##
-    ## REPLACE CONTENT OF THIS FILE WITH YOUR PROJECT REPORT ##
-    ##                                                       ##
-    ###########################################################
+Helped with the general logic of the code, helped cleanup some of the code, worked together to fix IPv4 problem.
