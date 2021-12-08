@@ -30,7 +30,6 @@ class RoutingTable(RoutingTableBase):
         #   int(entry.mask)
         #   int(entry.gw)
         for entry in self.entries:
-            print(entry.dest)
             if ip == entry.dest:
                 return entry
 

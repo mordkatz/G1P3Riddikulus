@@ -15,9 +15,9 @@ We were not able to establish tracerouting as we ran into various problems with 
 - Vagrant
 
 ## Project Members
-- **Mordechai Katz** | 
+- **Mordechai Katz** | 6198722
 
-Only student able to run Vagrant and Mininet due to installation issues. Committed the code we all worked on. Worked on the general logic of ___________
+Set up environment, worked on the general logic of, worked on returning ARPreplies, and handeling icmp process to self. 
 - **Andrew Van Ryn** |
 
 **Main lead** | Took charge in most of the code, helped solved most of the problems including ___________

@@ -49,6 +49,10 @@ class ArpCache(ArpCacheBase):
         incomingArpReply = headers.ArpHeader(arpHeader)
         req = cache.insertArpEntry(incomingArpReply.sip, incomingArpReply.sha)
         if req:
+            for packet in req.packets:
+                print("ARP Reply Code: x Req.Packets: ", packet)
+
+                # we need to forward the responses
             cache.removeRequest(req)
 
         print("This is the Arp Response: ", req)

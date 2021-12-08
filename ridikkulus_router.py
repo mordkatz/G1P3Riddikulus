@@ -26,6 +26,7 @@ from router_base.interface import Interface
 from router_base.utils import checksum, print_hdrs
 
 import sys
+import time
 
 DEBUG = False
 
@@ -298,17 +299,24 @@ class SimpleRouter(SimpleRouterBase):
         else:
             entry = self.routingTable.lookup(pkt.dst)
             if entry is not None:
+                logVerboseMessage("Checkpoint 1")
                 if entry.gw == type(entry.gw)("0.0.0.0"):
                     arpEntry = self.arpCache.lookup(pkt.dst)
                 else:
                     arpEntry = self.arpCache.lookup(entry.gw)
-                if arpEntry is not None:
-                    newEtherHeader = headers.EtherHeader(dhost= arpEntry.mac,shost= iface.mac,type= iface.type)
-                    new_packet = newEtherHeader.encode() + pkt.encode()
-                    self.sendPacket(new_packet, iface.name)
-                else:
-                    #what should the destination mac address be
-                    newEtherHeader = headers.EtherHeader(dhost="ff:ff:ff:ff:ff:ff",shost=iface.mac, type= 0x0806)
+                arpRequest = 1
+                while arpRequest <= 5:
+                    if arpEntry is not None:
+                        logVerboseMessage("Checkpoint 4")
+                        newEtherHeader = headers.EtherHeader(dhost= arpEntry.mac,shost= iface.mac,type= iface.type)
+                        new_packet = newEtherHeader.encode() + pkt.encode()
+                        self.sendPacket(new_packet, iface.name)
+                        arpRequest = 6
+                    else:
+                        if arpRequest == 5: break
+                        #what should the destination mac address be
+                        logVerboseMessage("Checkpoint 5")
+                        newEtherHeader = headers.EtherHeader(dhost="ff:ff:ff:ff:ff:ff",shost=iface.mac, type= 0x0806)
 
                     # I am not sure about the entry stuff and I need to find out what hrd, pro, hln, pln should be
                     arpHeader = headers.ArpHeader(op=2, sha=iface.mac, sip=iface.ip,
