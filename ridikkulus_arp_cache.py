@@ -47,15 +47,17 @@ class ArpCache(ArpCacheBase):
         '''
         # Lookup request using the decoded arpHeader
         incomingArpReply = headers.ArpHeader(arpHeader)
+        print("/////////////////////////////////////////////////////////////////")
+        print("This is the Arp Response: ", req)
         req = cache.insertArpEntry(incomingArpReply.sip, incomingArpReply.sha)
+        print("This is the Arp Response: ", req)
+
         if req:
             for packet in req.packets:
                 print("ARP Reply Code: x Req.Packets: ", packet)
 
                 # we need to forward the responses
             cache.removeRequest(req)
-
-        print("This is the Arp Response: ", req)
 
 
     def resendOrRemoveQueuedRequest(self, req):

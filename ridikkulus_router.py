@@ -58,7 +58,7 @@ class SimpleRouter(SimpleRouterBase):
 
         logVerboseMessage(
             "####################################################\nPacket received...\n")
-        #utils.print_hdrs(origPacket)
+        utils.print_hdrs(origPacket)
         logVerboseMessage("\n####################################################\n")
 
         # Ethernet
@@ -122,6 +122,7 @@ class SimpleRouter(SimpleRouterBase):
                                                      type=0x0806)
                 new_packet = newEtherHeader.encode() + tempPacket.encode()
                 self.sendPacket(new_packet, iface.name)
+
         elif pkt.op == 2:
             self.arpCache.handleIncomingArpReply(pkt)
         else:
@@ -301,8 +302,10 @@ class SimpleRouter(SimpleRouterBase):
             if entry is not None:
                 logVerboseMessage("Checkpoint 1")
                 if entry.gw == type(entry.gw)("0.0.0.0"):
+                    logVerboseMessage("Checkpoint 2")
                     arpEntry = self.arpCache.lookup(pkt.dst)
                 else:
+                    logVerboseMessage("Checkpoint 3")
                     arpEntry = self.arpCache.lookup(entry.gw)
                 arpRequest = 1
                 while arpRequest <= 5:
@@ -318,12 +321,16 @@ class SimpleRouter(SimpleRouterBase):
                         logVerboseMessage("Checkpoint 5")
                         newEtherHeader = headers.EtherHeader(dhost="ff:ff:ff:ff:ff:ff",shost=iface.mac, type= 0x0806)
 
-                    # I am not sure about the entry stuff and I need to find out what hrd, pro, hln, pln should be
-                    arpHeader = headers.ArpHeader(op=2, sha=iface.mac, sip=iface.ip,
-                                                  tha="00:00:00:00:00:00", tip=pkt.dst)
-                    new_packet = newEtherHeader.encode() + arpHeader.encode()
-                    self.sendPacket(new_packet, iface.name)
-                    self.arpCache.queueRequest(pkt.dst, pkt, iface)
+                        # I am not sure about the entry stuff and I need to find out what hrd, pro, hln, pln should be
+                        arpHeader = headers.ArpHeader(hln=6, pln=4, op=1, sha=iface.mac, sip=iface.ip,
+                                                      tha="ff:ff:ff:ff:ff:ff", tip=pkt.dst)
+                        # logVerboseMessage("Iface Information: " + str(iface))
+                        # logVerboseMessage("Arp Header Information: " + str(arpHeader))
+                        new_packet = newEtherHeader.encode() + arpHeader.encode()
+                        self.sendPacket(new_packet, iface.name)
+                        self.arpCache.queueRequest(pkt.dst, pkt, iface)
+                        arpRequest = arpRequest +1
+                        time.sleep(1)
                     pass
 
             pass
@@ -337,7 +344,7 @@ class SimpleRouter(SimpleRouterBase):
 
         logVerboseMessage(
             "####################################################\nPacket sending...\n")
-        #utils.print_hdrs(packet)
+        utils.print_hdrs(packet)
         logVerboseMessage("\n####################################################\n")
         super().sendPacket(packet, outIface)
 
