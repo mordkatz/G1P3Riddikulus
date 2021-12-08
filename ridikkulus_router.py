@@ -308,13 +308,14 @@ class SimpleRouter(SimpleRouterBase):
                     logVerboseMessage("Checkpoint 3")
                     arpEntry = self.arpCache.lookup(entry.gw)
                 arpRequest = 1
-                while arpRequest <= 5:
+                gotResponse = False
+                while arpRequest <= 5 and gotResponse == False:
                     if arpEntry is not None:
                         logVerboseMessage("Checkpoint 4")
                         newEtherHeader = headers.EtherHeader(dhost= arpEntry.mac,shost= iface.mac,type= iface.type)
                         new_packet = newEtherHeader.encode() + pkt.encode()
                         self.sendPacket(new_packet, iface.name)
-                        arpRequest = 6
+                        gotResponse = True
                     else:
                         if arpRequest == 5: break
                         #what should the destination mac address be
@@ -331,7 +332,25 @@ class SimpleRouter(SimpleRouterBase):
                         self.arpCache.queueRequest(pkt.dst, pkt, iface)
                         arpRequest = arpRequest +1
                         time.sleep(1)
-                    pass
+                '''
+                If your router didn’t receive ARP reply after re-transmitting an ARP request 5 times, 
+                it should stop re-transmitting, remove the pending request, and any packets that are queued for the 
+                transmission that are associated with the request. Your router should also send an ICMP Destination 
+                Unreachable message to the source IP.
+                '''
+                if gotResponse == False:
+
+                    # sending an ICMP Destination Unreachable message to the source IP
+                    newEtherHeader = self.createEtherReturnHeader(etherHead)
+                    newIpHeader = self.createIpReturnHeader(pkt)
+                    newIpHeader.sum = utils.checksum(newIpHeader.encode())
+                    newIcmpHeader = self.createIcmpReturnHeader(icmp)
+                    newIcmpHeader.type = 3
+                    newIcmpHeader.code = 1
+                    newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
+                    new_packet = newEtherHeader.encode() + newIpHeader.encode() + \
+                                 newIcmpHeader.encode()
+                    self.sendPacket(new_packet, iface.name)
 
             pass
 
