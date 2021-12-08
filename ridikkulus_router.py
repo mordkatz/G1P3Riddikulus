@@ -313,6 +313,9 @@ class SimpleRouter(SimpleRouterBase):
                     if arpEntry is not None:
                         logVerboseMessage("Checkpoint 4")
                         newEtherHeader = headers.EtherHeader(dhost= arpEntry.mac,shost= iface.mac,type= iface.type)
+                        # the packet ttl and checksum need to be updated
+                        pkt.ttl = pkt.ttl - arpRequest
+                        pkt.sum = utils.checksum(pkt.encode())
                         new_packet = newEtherHeader.encode() + pkt.encode()
                         self.sendPacket(new_packet, iface.name)
                         gotResponse = True
@@ -343,6 +346,7 @@ class SimpleRouter(SimpleRouterBase):
                     # sending an ICMP Destination Unreachable message to the source IP
                     newEtherHeader = self.createEtherReturnHeader(etherHead)
                     newIpHeader = self.createIpReturnHeader(pkt)
+                    newIpHeader.ttl = 64
                     newIpHeader.sum = utils.checksum(newIpHeader.encode())
                     newIcmpHeader = self.createIcmpReturnHeader(icmp)
                     newIcmpHeader.type = 3
