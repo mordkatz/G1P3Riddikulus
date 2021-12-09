@@ -5,10 +5,10 @@ The following project establishes a simple router with a static routing table wh
 We were not able to establish tracerouting as we ran into various problems with the established code.
 
 ## Problems
-1.
+1. 
 - a
-2.
-- b
+2. Although we were able to get 70 points, the code wasn't structured properly to give us the full points. 
+- 
 
 ## Libraries
 - Mininet
@@ -18,9 +18,9 @@ We were not able to establish tracerouting as we ran into various problems with 
 - **Mordechai Katz** | 6198722
 
 Set up environment, worked on the general logic of, worked on returning ARPreplies, and handeling icmp process to self. 
-- **Andrew Van Ryn** |
+- **Andrew Van Ryn** | 2432461
 
-**Main lead** | Took charge in most of the code, helped solved most of the problems including ___________
+**Main lead** | Took charge in most of the code, restructured most of the code to get the full amount of points
 - **Jonathan Zamora** | 6122352
 
 Helped with the general logic of the code, helped cleanup some of the code, worked together to fix IPv4 problem.
