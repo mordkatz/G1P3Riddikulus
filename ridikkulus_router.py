@@ -28,7 +28,7 @@ from router_base.utils import checksum, print_hdrs
 import sys
 import time
 
-DEBUG = False
+DEBUG = True
 
 
 def logVerboseMessage(s):
@@ -307,7 +307,7 @@ class SimpleRouter(SimpleRouterBase):
                 else:
                     logVerboseMessage("Checkpoint 3")
                     arpEntry = self.arpCache.lookup(entry.gw)
-                arpRequest = 1
+                arpRequest = 0
                 gotResponse = False
                 while arpRequest <= 5 and gotResponse == False:
                     if arpEntry is not None:
@@ -342,19 +342,22 @@ class SimpleRouter(SimpleRouterBase):
                 Unreachable message to the source IP.
                 '''
                 if gotResponse == False:
-
+                    # Removing queue requests
+                    for request in self.arpCache.arpRequests:
+                        if request.ip == pkt.dst:
+                            self.arpCache.removeRequest(request)
                     # sending an ICMP Destination Unreachable message to the source IP
                     newEtherHeader = self.createEtherReturnHeader(etherHead)
                     newIpHeader = self.createIpReturnHeader(pkt)
                     newIpHeader.ttl = 64
                     newIpHeader.sum = utils.checksum(newIpHeader.encode())
-                    newIcmpHeader = self.createIcmpReturnHeader(icmp)
-                    newIcmpHeader.type = 3
-                    newIcmpHeader.code = 1
-                    newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
-                    new_packet = newEtherHeader.encode() + newIpHeader.encode() + \
-                                 newIcmpHeader.encode()
-                    self.sendPacket(new_packet, iface.name)
+                    icmpHeader = headers.IcmpHeader(type=3, code=3, sum=0, id=0,
+                                  seqNum=0, data=newIpHeader)
+                    icmpHeader.data = icmpHeader.data.encode() +  icmp.data[:64]
+                    icmpHeader.sum = utils.checksum(icmpHeader.encode())
+                    new_packet2 = newEtherHeader.encode() + newIpHeader.encode() + icmpHeader.encode()
+                    self.sendPacket(new_packet2, iface.name)
+
 
             pass
 

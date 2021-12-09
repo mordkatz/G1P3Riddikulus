@@ -53,10 +53,6 @@ class ArpCache(ArpCacheBase):
         print("This is the Arp Response: ", req)
 
         if req:
-            for packet in req.packets:
-                print("ARP Reply Code: x Req.Packets: ", packet)
-
-                # we need to forward the responses
             cache.removeRequest(req)
 
 
