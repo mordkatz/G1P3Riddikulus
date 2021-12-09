@@ -139,6 +139,7 @@ class SimpleRouter(SimpleRouterBase):
                                 p=pkt.p, sum=0, src=pkt.dst, dst=pkt.src)
 
     def createIcmpReturnHeader(self, icmp):
+        print("CreateIcmpReturnHeader icmp ID / SeqNum: ", icmp.id, icmp.seqNum)
         return headers.IcmpHeader(type=0, code=0, sum=0, id=icmp.id,
                                   seqNum=icmp.seqNum, data=icmp.data)
 
@@ -168,29 +169,22 @@ class SimpleRouter(SimpleRouterBase):
         if utils.checksum(checksumPkt.encode()) != pkt.sum or len(ipPacket) < 21:
             logVerboseMessage("Checksum values DO NOT match!")
             return
-        else:
-            logVerboseMessage("Checksum values match!")
-            # print("Type of Service: {}, TTL: {}, Protocol: {}".format(pkt.tos, pkt.ttl, pkt.p))
-            if pkt.ttl > 0:
-                if iface.ip == pkt.dst:
-                    logVerboseMessage("IP Packet Destination IP matches this Router")
-                    self.processIpToSelf(etherHead, pkt, icmp, iface)
-                else:
-                    logVerboseMessage(
-                        "IP Packet Destination IP DOES NOT match router")
-                    self.processIpToForward(etherHead, pkt, icmp, iface)
 
-            else:
-                newEtherHeader = self.createEtherReturnHeader(etherHead)
-                newIpHeader = self.createIpReturnHeader(pkt)
-                newIpHeader.sum = utils.checksum(newIpHeader.encode())
-                newIcmpHeader = self.createIcmpReturnHeader(icmp)
-                newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
-                newIcmpHeader.type = 11
-                new_packet = newEtherHeader.encode() + newIpHeader.encode() + \
-                             newIcmpHeader.encode()
-                self.sendPacket(new_packet, iface.name)
-                return
+        if pkt.ttl > 0:
+            if self.findIfaceByIp(pkt.dst):
+                logVerboseMessage("IP Packet Destination IP matches this Router")
+                self.processIpToSelf(etherHead, pkt, icmp, iface)
+        else:
+            newEtherHeader = self.createEtherReturnHeader(etherHead)
+            newIpHeader = self.createIpReturnHeader(pkt)
+            newIpHeader.sum = utils.checksum(newIpHeader.encode())
+            newIcmpHeader = self.createIcmpReturnHeader(icmp)
+            newIcmpHeader.sum = utils.checksum(newIcmpHeader.encode())
+            newIcmpHeader.type = 11
+            new_packet = newEtherHeader.encode() + newIpHeader.encode() + \
+                         newIcmpHeader.encode()
+            self.sendPacket(new_packet, iface.name)
+            return
 
     def processIpToSelf(self, etherHead, pkt, icmp, iface):
         """
