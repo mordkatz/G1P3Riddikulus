@@ -11,10 +11,10 @@ We were not able to establish tracerouting as we ran into various problems with 
 ## Project Members
 - **Mordechai Katz** | 6198722
 
-Set up environment, worked on returning ARPreplies, forwarding packets, and handeling icmp process to self. 
+Set up testing environment, worked on returning ARP replies, forwarding packets, and handeling ICMP process to self. 
 - **Andrew Van Ryn** | 2432461
 
-Took charge in most of the code, restructured most of the code to get the full amount of points
+Worked on handeling IPv4 packets, ARP requests, and ARP cache
 - **Jonathan Zamora** | 6122352
 
 Helped with the general logic of the code, helped cleanup some of the code, worked together to fix IPv4 problem.
